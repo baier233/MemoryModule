@@ -458,8 +458,13 @@ BuildImportTable(PMEMORYMODULE module)
             result = FALSE;
             break;
         }
+		if (module->modules == NULL) {
 
-        tmp = (HCUSTOMMODULE *) realloc(module->modules, (module->numModules+1)*(sizeof(HCUSTOMMODULE)));
+			tmp = (HCUSTOMMODULE*)HeapAlloc(GetProcessHeap(), 0, (module->numModules + 1) * sizeof(HCUSTOMMODULE));
+		}
+		else {
+			tmp = (HCUSTOMMODULE*)HeapReAlloc(GetProcessHeap(), 0, module->modules, (module->numModules + 1) * sizeof(HCUSTOMMODULE));
+		}
         if (tmp == NULL) {
             module->freeLibrary(handle, module->userdata);
             SetLastError(ERROR_OUTOFMEMORY);
@@ -876,8 +881,9 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
                 module->freeLibrary(module->modules[i], module->userdata);
             }
         }
-
-        free(module->modules);
+        if (module->modules != NULL) {
+	        HeapFree(GetProcessHeap(), 0, module->modules);
+        }
     }
 
     if (module->codeBase != NULL) {
